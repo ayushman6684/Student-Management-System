@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Management System — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1923;--gold:#c9a84c;--gold-light:#e8c96a;--cream:#faf7f2;
+  --blue:#1e3a5f;--blue-mid:#2d5a8e;--red:#c0392b;--green:#27ae60;
+  --shadow:0 24px 64px rgba(0,0,0,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  padding:40px 16px;background:var(--blue);font-family:'DM Sans',sans-serif;
+  overflow-y:auto;position:relative;}
+
+/* animated bg */
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 40%,rgba(201,168,76,.15) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 80% at 80% 60%,rgba(45,90,142,.3) 0%,transparent 60%);
+  animation:shift 8s ease-in-out infinite alternate;}
+@keyframes shift{from{transform:scale(1)}to{transform:scale(1.05)}}
+
+.bg-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Playfair Display',serif;font-size:clamp(80px,15vw,200px);
+  color:rgba(255,255,255,.03);white-space:nowrap;pointer-events:none;z-index:0;letter-spacing:-4px;}
+
+.card{position:relative;z-index:1;background:#fff;border-radius:24px;
+  width:min(460px,95vw);padding:48px 44px;box-shadow:var(--shadow);
+  margin:auto;
+  animation:rise .6s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+.logo{text-align:center;margin-bottom:36px;}
+.logo-badge{display:inline-flex;align-items:center;justify-content:center;
+  width:64px;height:64px;background:var(--blue);border-radius:16px;
+  margin-bottom:14px;box-shadow:0 8px 24px rgba(30,58,95,.4);}
+.logo-badge svg{width:32px;height:32px;fill:#fff;}
+.logo h1{font-family:'Playfair Display',serif;font-size:26px;color:var(--ink);}
+.logo p{font-size:13px;color:#888;margin-top:4px;}
+
+.tabs{display:flex;background:#f3f3f3;border-radius:12px;padding:4px;margin-bottom:28px;}
+.tab{flex:1;text-align:center;padding:9px;border-radius:9px;cursor:pointer;
+  font-size:14px;font-weight:500;color:#888;transition:.25s;}
+.tab.active{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+
+.form-group{margin-bottom:20px;position:relative;}
+label{display:block;font-size:12px;font-weight:500;color:#555;margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase;}
+input,select{width:100%;padding:13px 16px;border:1.5px solid #e0e0e0;border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);
+  background:#fafafa;transition:.2s;outline:none;}
+input:focus,select:focus{border-color:var(--blue-mid);background:#fff;box-shadow:0 0 0 3px rgba(45,90,142,.1);}
+input.err{border-color:var(--red);}
+.err-msg{font-size:12px;color:var(--red);margin-top:5px;display:none;}
+.err-msg.show{display:block;}
+
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:44px;}
+.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  cursor:pointer;color:#aaa;background:none;border:none;font-size:18px;padding:0;}
+
+.btn{width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;
+  background:var(--blue);color:#fff;transition:.25s;position:relative;overflow:hidden;}
+.btn:hover{background:var(--blue-mid);transform:translateY(-1px);box-shadow:0 8px 20px rgba(30,58,95,.3);}
+.btn:active{transform:translateY(0);}
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);
+  transform:scale(0);animation:ripple .6s linear;}
+@keyframes ripple{to{transform:scale(4);opacity:0;}}
+.btn.loading::after{content:'';display:inline-block;width:16px;height:16px;
+  border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;margin-left:10px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:#ccc;font-size:13px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#eee;}
+
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:18px;display:none;}
+.alert.show{display:flex;align-items:center;gap:8px;}
+.alert.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.alert.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+
+.strength-bar{height:4px;border-radius:2px;margin-top:6px;background:#eee;overflow:hidden;}
+.strength-fill{height:100%;border-radius:2px;transition:.3s;width:0;}
+</style>
+</head>
+<body>
+<div class="bg-text">SMS</div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+    </div>
+    <h1>Student Portal</h1>
+    <p>Student Management System</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Sign In</div>
+    <div class="tab" onclick="switchTab('signup')">Register</div>
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <!-- LOGIN FORM -->
+  <div id="loginForm">
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com">
+      <div class="err-msg" id="loginEmailErr">Enter a valid email</div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPw" placeholder="••••••••">
+        <button class="pw-toggle" onclick="togglePw('loginPw',this)">👁</button>
+      </div>
+      <div class="err-msg" id="loginPwErr">Password required</div>
+    </div>
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="divider">or</div>
+    <p style="text-align:center;font-size:13px;color:#888;">Demo: <b>admin@sms.com</b> / <b>admin123</b></p>
+  </div>
+
+  <!-- SIGNUP FORM -->
+  <div id="signupForm" style="display:none">
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="signName" placeholder="John Smith">
+      <div class="err-msg" id="signNameErr">Name required</div>
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="signEmail" placeholder="you@example.com">
+      <div class="err-msg" id="signEmailErr">Enter a valid email</div>
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="signRole">
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="signPw" placeholder="Min 6 characters" oninput="checkStrength(this.value)">
+        <button class="pw-toggle" onclick="togglePw('signPw',this)">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="err-msg" id="signPwErr">Min 6 characters</div>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="signPw2" placeholder="Re-enter password">
+        <button class="pw-toggle" onclick="togglePw('signPw2',this)">👁</button>
+      </div>
+      <div class="err-msg" id="signPw2Err">Passwords don't match</div>
+    </div>
+    <button class="btn" id="signBtn" onclick="doSignup()">Create Account</button>
+  </div>
+</div>
+
+<script>
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===(t==='login'?0:1)));
+  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
+  document.getElementById('signupForm').style.display=t==='signup'?'block':'none';
+  hideAlert();
+}
+function togglePw(id,btn){
+  const el=document.getElementById(id);
+  el.type=el.type==='password'?'text':'password';
+  btn.textContent=el.type==='password'?'👁':'🙈';
+}
+function checkStrength(pw){
+  const fill=document.getElementById('strengthFill');
+  let s=0;
+  if(pw.length>=6)s++;if(pw.length>=10)s++;
+  if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^a-zA-Z0-9]/.test(pw))s++;
+  const colors=['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+  fill.style.width=(s/5*100)+'%';
+  fill.style.background=colors[s-1]||'#eee';
+}
+function showAlert(msg,type){
+  const a=document.getElementById('alertBox');
+  a.className='alert '+type+' show';
+  a.textContent=(type==='success'?'✓ ':'✗ ')+msg;
+  setTimeout(()=>a.classList.remove('show'),4000);
+}
+function hideAlert(){document.getElementById('alertBox').classList.remove('show');}
+function setErr(id,show){
+  document.getElementById(id).parentElement.querySelector('input,select')?.classList.toggle('err',show);
+  document.getElementById(id).classList.toggle('show',show);
+}
+function rippleBtn(btn){
+  const r=document.createElement('span');r.className='ripple';
+  const rect=btn.getBoundingClientRect();
+  r.style.width=r.style.height=Math.max(rect.width,rect.height)+'px';
+  r.style.left=r.style.top='0';btn.appendChild(r);
+  setTimeout(()=>r.remove(),600);
+}
+
+async function doLogin(){
+  const btn=document.getElementById('loginBtn');
+  const email=document.getElementById('loginEmail').value.trim();
+  const pw=document.getElementById('loginPw').value;
+  let ok=true;
+  setErr('loginEmailErr',!email||!email.includes('@'));
+  setErr('loginPwErr',!pw);
+  if(!email||!email.includes('@')||!pw)return;
+  rippleBtn(btn);btn.classList.add('loading');btn.disabled=true;
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(d.ok){
+      localStorage.setItem('smsUser',JSON.stringify(d.user));
+      showAlert('Welcome back, '+d.user.name+'!','success');
+      setTimeout(()=>location.href='dashboard.html',900);
+    }else{showAlert(d.msg,'error');}
+  }catch(e){showAlert('Server error. Is the backend running?','error');}
+  finally{btn.classList.remove('loading');btn.disabled=false;}
+}
+
+async function doSignup(){
+  const btn=document.getElementById('signBtn');
+  const name=document.getElementById('signName').value.trim();
+  const email=document.getElementById('signEmail').value.trim();
+  const role=document.getElementById('signRole').value;
+  const pw=document.getElementById('signPw').value;
+  const pw2=document.getElementById('signPw2').value;
+  setErr('signNameErr',!name);
+  setErr('signEmailErr',!email||!email.includes('@'));
+  setErr('signPwErr',pw.length<6);
+  setErr('signPw2Err',pw!==pw2);
+  if(!name||!email||!email.includes('@')||pw.length<6||pw!==pw2)return;
+  rippleBtn(btn);btn.classList.add('loading');btn.disabled=true;
+  try{
+    const r=await fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pw,role})});
+    const d=await r.json();
+    if(d.ok){showAlert('Account created! Please sign in.','success');setTimeout(()=>switchTab('login'),1200);}
+    else{showAlert(d.msg,'error');}
+  }catch(e){showAlert('Server error','error');}
+  finally{btn.classList.remove('loading');btn.disabled=false;}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){
+  if(document.getElementById('loginForm').style.display!=='none')doLogin();
+  else doSignup();
+}});
+</script>
+</body>
+</html>

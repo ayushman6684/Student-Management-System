@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Management System — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1923;--gold:#c9a84c;
+  --blue:#1e3a5f;--blue-mid:#2d5a8e;--blue-light:#e8f0fb;
+  --sidebar:248px;--topbar:68px;
+  --green:#27ae60;--red:#e74c3c;--orange:#f39c12;--purple:#8e44ad;--teal:#0891b2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#f4f6fb;color:var(--ink);display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--blue);position:fixed;top:0;left:0;height:100vh;
+  display:flex;flex-direction:column;z-index:100;overflow:hidden;}
+.sb-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo h2{font-family:'Playfair Display',serif;color:#fff;font-size:14.5px;line-height:1.35;letter-spacing:.1px;}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;letter-spacing:.6px;text-transform:uppercase;}
+.sb-role-badge{margin:10px 14px 4px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;
+  text-align:center;text-transform:uppercase;letter-spacing:.8px;}
+.role-admin{background:rgba(201,168,76,.2);color:#f0c84a;}
+.role-teacher{background:rgba(8,145,178,.2);color:#67e8f9;}
+.role-student{background:rgba(39,174,96,.2);color:#86efac;}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.nav-section{padding:8px 18px 3px;font-size:10px;font-weight:600;color:rgba(255,255,255,.28);
+  text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 18px;cursor:pointer;
+  color:rgba(255,255,255,.68);font-size:13.5px;transition:.2s;border-left:3px solid transparent;user-select:none;}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.07);}
+.nav-item.active{color:#fff;background:rgba(201,168,76,.14);border-left-color:var(--gold);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.sb-user{padding:13px 16px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-user-info{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;flex-shrink:0;
+  align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+.avatar.admin{background:var(--gold);color:var(--ink);}
+.avatar.teacher{background:var(--teal);color:#fff;}
+.avatar.student{background:var(--green);color:#fff;}
+.sb-user-name{font-size:13px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-user-role{font-size:11px;color:rgba(255,255,255,.4);text-transform:capitalize;margin-top:1px;}
+.logout-btn{width:100%;margin-top:10px;padding:8px;border:1px solid rgba(255,255,255,.13);
+  border-radius:8px;background:transparent;color:rgba(255,255,255,.55);cursor:pointer;
+  font-size:13px;transition:.2s;font-family:'DM Sans',sans-serif;}
+.logout-btn:hover{background:rgba(255,255,255,.09);color:#fff;}
+
+/* TOPBAR */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{height:var(--topbar);background:#fff;border-bottom:1px solid #eee;
+  display:flex;align-items:center;justify-content:space-between;padding:0 26px;
+  position:sticky;top:0;z-index:50;gap:14px;}
+.topbar-left{min-width:0;}
+.topbar h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);}
+.topbar-subtitle{font-size:11.5px;color:#b0b0b0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-right{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.topbar-date{font-size:11.5px;color:#bbb;white-space:nowrap;}
+.search-box{display:flex;align-items:center;gap:7px;background:#f4f6fb;
+  border-radius:9px;padding:7px 13px;border:1.5px solid transparent;}
+.search-box:focus-within{border-color:var(--blue-mid);background:#fff;}
+.search-box input{border:none;background:transparent;outline:none;font-size:13.5px;
+  font-family:'DM Sans',sans-serif;width:160px;}
+.role-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;}
+.chip-admin{background:#fef9ec;color:#92650a;border:1px solid #fde68a;}
+.chip-teacher{background:#ecfeff;color:#164e63;border:1px solid #a5f3fc;}
+.chip-student{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+
+/* CONTENT */
+.content{padding:24px;flex:1;}
+.page{display:none;animation:fadeIn .22s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ROLE BANNER */
+.role-banner{border-radius:13px;padding:15px 20px;margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;}
+.role-banner.admin{background:linear-gradient(130deg,#1e3a5f,#2d5a8e);color:#fff;}
+.role-banner.teacher{background:linear-gradient(130deg,#0891b2,#0e7490);color:#fff;}
+.role-banner.student{background:linear-gradient(130deg,#059669,#10b981);color:#fff;}
+.role-banner .bicon{font-size:26px;}
+.role-banner h3{font-family:'Playfair Display',serif;font-size:16px;}
+.role-banner p{font-size:12px;opacity:.78;margin-top:2px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:#fff;border-radius:13px;padding:18px;border-left:4px solid var(--blue);
+  box-shadow:0 2px 10px rgba(0,0,0,.05);transition:.22s;cursor:default;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+.stat-card.gold{border-left-color:var(--gold);}
+.stat-card.green{border-left-color:var(--green);}
+.stat-card.red{border-left-color:var(--red);}
+.stat-card.purple{border-left-color:var(--purple);}
+.stat-card.teal{border-left-color:var(--teal);}
+.stat-icon{font-size:26px;margin-bottom:7px;}
+.stat-val{font-size:26px;font-weight:700;font-family:'Playfair Display',serif;}
+.stat-label{font-size:12px;color:#999;margin-top:2px;}
+
+/* CARDS */
+.card{background:#fff;border-radius:13px;padding:20px;
+  box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:20px;}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.card-title{font-family:'Playfair Display',serif;font-size:16px;}
+.card-sub{font-size:12px;color:#bbb;margin-top:2px;}
+.btn-primary{padding:8px 16px;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;
+  font-weight:500;transition:.2s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary:hover{background:var(--blue-mid);}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-weight:500;transition:.2s;}
+.btn-edit{background:#e8f0fb;color:var(--blue-mid);}
+.btn-edit:hover{background:var(--blue-mid);color:#fff;}
+.btn-del{background:#fef2f2;color:var(--red);}
+.btn-del:hover{background:var(--red);color:#fff;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th{padding:8px 12px;text-align:left;font-size:10.5px;font-weight:600;color:#aaa;
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #f2f2f2;}
+td{padding:10px 12px;font-size:13.5px;border-bottom:1px solid #f7f7f7;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbff;}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-active,.badge-present,.badge-paid{background:#f0fdf4;color:var(--green);}
+.badge-inactive,.badge-absent,.badge-overdue{background:#fef2f2;color:var(--red);}
+.badge-pending,.badge-late{background:#fff7ed;color:var(--orange);}
+.badge-suspended{background:#fdf4ff;color:#9333ea;}
+.badge-graduated{background:#eff6ff;color:#1d4ed8;}
+.badge-excused,.badge-partial{background:#f0f9ff;color:var(--teal);}
+
+/* PROFILE */
+.profile-hero{background:linear-gradient(130deg,var(--blue),var(--blue-mid));
+  border-radius:15px;padding:26px;color:#fff;margin-bottom:18px;
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.profile-avatar-lg{width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.2);
+  border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;flex-shrink:0;}
+.profile-hero h2{font-family:'Playfair Display',serif;font-size:21px;}
+.profile-hero p{font-size:13px;opacity:.78;margin-top:3px;}
+.profile-meta{margin-top:9px;display:flex;gap:10px;flex-wrap:wrap;}
+.profile-meta span{background:rgba(255,255,255,.14);border-radius:6px;padding:3px 10px;font-size:12px;}
+
+.info-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.info-block{background:#fff;border-radius:13px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.info-block h4{font-size:11px;font-weight:600;color:#bbb;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:13px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13.5px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .key{color:#999;font-size:13px;}
+.info-row .val{font-weight:500;text-align:right;max-width:58%;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);
+  z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:18px;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:17px;width:min(550px,100%);max-height:90vh;
+  overflow-y:auto;box-shadow:0 28px 70px rgba(0,0,0,.22);animation:slideUp .27s ease both;}
+@keyframes slideUp{from{transform:translateY(26px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.modal-header h2{font-family:'Playfair Display',serif;font-size:18px;}
+.close-btn{background:none;border:none;font-size:19px;cursor:pointer;color:#c0c0c0;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;transition:.2s;}
+.close-btn:hover{background:#f0f0f0;color:var(--ink);}
+.modal-body{padding:16px 24px 20px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{margin-bottom:13px;}
+.form-group label{display:block;font-size:11px;font-weight:600;color:#777;
+  margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:10px 12px;border:1.5px solid #e8e8e8;border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:.2s;color:var(--ink);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(45,90,142,.07);}
+.modal-footer{padding:0 24px 20px;display:flex;gap:9px;justify-content:flex-end;}
+.btn-cancel{padding:9px 18px;background:#f4f4f4;color:#666;border:none;
+  border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;}
+.btn-save{padding:9px 22px;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;}
+.btn-save:hover{background:var(--blue-mid);}
+
+/* ACCESS DENIED */
+.access-denied{text-align:center;padding:50px 20px;color:#ccc;}
+.access-denied .big{font-size:48px;margin-bottom:14px;}
+.access-denied h3{font-family:'Playfair Display',serif;font-size:19px;color:#aaa;margin-bottom:7px;}
+.access-denied p{font-size:13.5px;color:#bbb;}
+.empty-state{text-align:center;padding:36px 20px;color:#ccc;}
+.empty-state .big{font-size:40px;margin-bottom:10px;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:12px 16px;border-radius:11px;font-size:13.5px;
+  box-shadow:0 7px 20px rgba(0,0,0,.13);animation:toastIn .27s ease;
+  display:flex;align-items:center;gap:9px;min-width:210px;background:#fff;}
+@keyframes toastIn{from{transform:translateX(34px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.success{border-left:4px solid var(--green);}
+.toast.error{border-left:4px solid var(--red);}
+.toast.info{border-left:4px solid var(--blue-mid);}
+
+/* MISC */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.progress{background:#ebebeb;border-radius:4px;height:7px;overflow:hidden;margin-top:5px;}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.divider{height:1px;background:#f0f0f0;margin:18px 0;}
+.restrict-note{padding:11px 15px;background:#fffbec;border:1px solid #fde68a;border-radius:9px;
+  font-size:13px;color:#92650a;margin-top:14px;}
+.g-aplus{color:#16a085;font-weight:700;} .g-a{color:#27ae60;font-weight:700;}
+.g-bplus{color:#2980b9;font-weight:700;} .g-b{color:#1abc9c;font-weight:700;}
+.g-c{color:#f39c12;font-weight:700;} .g-d{color:#e67e22;font-weight:700;} .g-f{color:#e74c3c;font-weight:700;}
+
+@media(max-width:900px){.info-grid-2{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}}
+@media(max-width:768px){
+  .sidebar{width:58px;}
+  .sidebar .nav-item span,.sb-logo p,.sb-logo h2,.sb-user-name,
+  .sb-user-role,.logout-btn,.nav-section,.sb-role-badge{display:none;}
+  .main{margin-left:58px;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h2>📚 Student Management System</h2>
+    <p>Academic Portal</p>
+  </div>
+  <div id="roleBadge" class="sb-role-badge"></div>
+  <nav class="sb-nav" id="sideNav"></nav>
+  <div class="sb-user">
+    <div class="sb-user-info">
+      <div class="avatar" id="avatarEl">U</div>
+      <div style="min-width:0;">
+        <div class="sb-user-name" id="userNameEl">User</div>
+        <div class="sb-user-role" id="userRoleEl">—</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">← Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="topbar-subtitle" id="pageSubtitle">Student Management System</div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box" id="searchBox">
+        <span>🔍</span>
+        <input type="text" placeholder="Search students..." oninput="globalSearch(this.value)">
+      </div>
+      <span class="role-chip" id="topChip"></span>
+      <span class="topbar-date" id="dateEl"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD (dynamic per role) -->
+    <div class="page active" id="pg-dashboard"></div>
+
+    <!-- STUDENT: MY PROFILE -->
+    <div class="page" id="pg-myprofile"></div>
+
+    <!-- STUDENT: MY GRADES -->
+    <div class="page" id="pg-mygrades">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📊 My Grades</div><div class="card-sub">Your academic performance by subject</div></div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Subject</th><th>Marks</th><th>Max Marks</th><th>Grade</th><th>Semester</th></tr></thead>
+          <tbody id="myGradeTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- STUDENT: MY ATTENDANCE -->
+    <div class="page" id="pg-myattendance">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📋 My Attendance</div><div class="card-sub">Your class attendance record</div></div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead>
+          <tbody id="myAttTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- STUDENT: MY FEES -->
+    <div class="page" id="pg-myfees">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">💰 My Fee Records</div><div class="card-sub">Your fee payment history</div></div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Description</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th></tr></thead>
+          <tbody id="myFeeTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ADMIN+TEACHER: STUDENTS -->
+    <div class="page" id="pg-students">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">🎓 All Students</div><div class="card-sub" id="studentPageSub"></div></div>
+          <button class="btn-primary" id="addStudentBtn" onclick="openAddStudent()">+ Add Student</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>ID</th><th>Name</th><th>Course</th><th>Year</th><th>GPA</th><th>Status</th><th>Email</th><th id="actHead">Actions</th></tr></thead>
+          <tbody id="studentTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ADMIN+TEACHER: ATTENDANCE -->
+    <div class="page" id="pg-attendance">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📋 Attendance Records</div><div class="card-sub">Track and manage student attendance</div></div>
+          <button class="btn-primary" id="addAttBtn" onclick="openAttModal()">+ Mark Attendance</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Record ID</th><th>Student</th><th>Date</th><th>Subject</th><th>Status</th></tr></thead>
+          <tbody id="attTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ADMIN+TEACHER: GRADES -->
+    <div class="page" id="pg-grades">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📊 Grade Records</div><div class="card-sub">Manage academic grades</div></div>
+          <button class="btn-primary" id="addGradeBtn" onclick="openGradeModal()">+ Add Grade</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>ID</th><th>Student</th><th>Subject</th><th>Marks</th><th>Max</th><th>Grade</th><th>Semester</th></tr></thead>
+          <tbody id="gradeTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ADMIN ONLY: FEES -->
+    <div class="page" id="pg-fees">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">💰 Fee Records</div><div class="card-sub">Financial management — Admin only</div></div>
+          <button class="btn-primary" onclick="openFeeModal()">+ Add Fee Record</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>ID</th><th>Student</th><th>Amount</th><th>Description</th><th>Due Date</th><th>Paid Date</th><th>Status</th></tr></thead>
+          <tbody id="feeTable"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ADMIN ONLY: REPORTS -->
+    <div class="page" id="pg-reports">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📈 System Reports — Admin Only</div></div>
+        <div id="reportContent"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="studentModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="studModalTitle">Add Student</h2><button class="close-btn" onclick="closeModal('studentModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editStudentId">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input id="sName" placeholder="e.g. Priya Sharma"></div>
+        <div class="form-group"><label>Email *</label><input id="sEmail" type="email" placeholder="student@edu.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Phone</label><input id="sPhone" placeholder="+91 9876543210"></div>
+        <div class="form-group"><label>Course</label>
+          <select id="sCourse"><option>B.Tech Computer Science</option><option>B.Tech Electronics</option>
+            <option>B.Sc Mathematics</option><option>B.Sc Physics</option>
+            <option>MBA</option><option>BCA</option><option>MCA</option><option>B.Com</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Year</label>
+          <select id="sYear"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        </div>
+        <div class="form-group"><label>GPA (0–10)</label><input id="sGpa" type="number" min="0" max="10" step="0.1" placeholder="8.5"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label>
+          <select id="sStatus"><option>Active</option><option>Inactive</option><option>Suspended</option><option>Graduated</option></select>
+        </div>
+        <div class="form-group"><label>Guardian</label><input id="sGuardian" placeholder="Parent / Guardian name"></div>
+      </div>
+      <div class="form-group"><label>Address</label>
+        <textarea id="sAddress" rows="2" style="resize:none" placeholder="Full address"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('studentModal')">Cancel</button>
+      <button class="btn-save" onclick="saveStudent()">💾 Save Student</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="attModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Mark Attendance</h2><button class="close-btn" onclick="closeModal('attModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Student</label><select id="attStudId"></select></div>
+        <div class="form-group"><label>Date</label><input id="attDate" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Subject</label><input id="attSubject" placeholder="e.g. Mathematics"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="attStatus"><option>Present</option><option>Absent</option><option>Late</option><option>Excused</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('attModal')">Cancel</button>
+      <button class="btn-save" onclick="saveAttendance()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="gradeModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Add Grade</h2><button class="close-btn" onclick="closeModal('gradeModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Student</label><select id="gradeStudId"></select></div>
+        <div class="form-group"><label>Subject</label><input id="gradeSubject" placeholder="e.g. Physics"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Marks Obtained</label><input id="gradeMarks" type="number" placeholder="85"></div>
+        <div class="form-group"><label>Max Marks</label><input id="gradeMax" type="number" placeholder="100" value="100"></div>
+      </div>
+      <div class="form-group"><label>Semester</label>
+        <select id="gradeSem"><option>1</option><option>2</option><option>3</option><option>4</option>
+          <option>5</option><option>6</option><option>7</option><option>8</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('gradeModal')">Cancel</button>
+      <button class="btn-save" onclick="saveGrade()">💾 Save Grade</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="feeModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Add Fee Record</h2><button class="close-btn" onclick="closeModal('feeModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Student</label><select id="feeStudId"></select></div>
+        <div class="form-group"><label>Amount (₹)</label><input id="feeAmount" type="number" placeholder="15000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Due Date</label><input id="feeDue" type="date"></div>
+        <div class="form-group"><label>Paid Date</label><input id="feePaid" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label>
+          <select id="feeStatus"><option>Pending</option><option>Paid</option><option>Overdue</option><option>Partial</option></select>
+        </div>
+        <div class="form-group"><label>Description</label><input id="feeDesc" placeholder="e.g. Semester Fee Q1"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('feeModal')">Cancel</button>
+      <button class="btn-save" onclick="saveFee()">💾 Save Record</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── AUTH CHECK ─────────────────────────────────────────────
+const user = JSON.parse(localStorage.getItem('smsUser') || 'null');
+if (!user) { location.href = 'index.html'; }
+const ROLE = (user && user.role) ? user.role.toLowerCase() : 'student';
+
+// ── NAV CONFIG PER ROLE ────────────────────────────────────
+const NAV_CONFIG = {
+  admin: [
+    {sec:'Main'},
+    {id:'dashboard',  icon:'🏠', label:'Dashboard'},
+    {sec:'Academic'},
+    {id:'students',   icon:'🎓', label:'Students'},
+    {id:'attendance', icon:'📋', label:'Attendance'},
+    {id:'grades',     icon:'📊', label:'Grades'},
+    {sec:'Finance'},
+    {id:'fees',       icon:'💰', label:'Fee Records'},
+    {sec:'System'},
+    {id:'reports',    icon:'📈', label:'Reports'},
+  ],
+  teacher: [
+    {sec:'Main'},
+    {id:'dashboard',  icon:'🏠', label:'Dashboard'},
+    {sec:'Academic'},
+    {id:'students',   icon:'🎓', label:'Students'},
+    {id:'attendance', icon:'📋', label:'Attendance'},
+    {id:'grades',     icon:'📊', label:'Grades'},
+  ],
+  student: [
+    {sec:'My Portal'},
+    {id:'dashboard',    icon:'🏠', label:'Dashboard'},
+    {id:'myprofile',    icon:'👤', label:'My Profile'},
+    {sec:'Academics'},
+    {id:'mygrades',     icon:'📊', label:'My Grades'},
+    {id:'myattendance', icon:'📋', label:'My Attendance'},
+    {sec:'Finance'},
+    {id:'myfees',       icon:'💰', label:'My Fees'},
+  ],
+};
+
+const ROLE_LABEL = {admin:'Administrator', teacher:'Teacher', student:'Student'};
+const CHIP_CLASS  = {admin:'chip-admin', teacher:'chip-teacher', student:'chip-student'};
+const AVT_CLASS   = {admin:'admin', teacher:'teacher', student:'student'};
+
+// ── BUILD UI ───────────────────────────────────────────────
+(function init(){
+  document.getElementById('avatarEl').textContent = (user.name||'U')[0].toUpperCase();
+  document.getElementById('avatarEl').classList.add(AVT_CLASS[ROLE]||'student');
+  document.getElementById('userNameEl').textContent = user.name || 'User';
+  document.getElementById('userRoleEl').textContent = ROLE_LABEL[ROLE] || ROLE;
+  document.getElementById('dateEl').textContent = new Date().toLocaleDateString('en-IN',
+    {weekday:'short',year:'numeric',month:'short',day:'numeric'});
+
+  const chip = document.getElementById('topChip');
+  chip.textContent = ROLE_LABEL[ROLE];
+  chip.className = 'role-chip ' + (CHIP_CLASS[ROLE]||'chip-student');
+
+  const badge = document.getElementById('roleBadge');
+  badge.textContent = ROLE_LABEL[ROLE];
+  badge.className = 'sb-role-badge role-' + ROLE;
+
+  // Build sidebar nav
+  const nav = document.getElementById('sideNav');
+  (NAV_CONFIG[ROLE] || NAV_CONFIG.student).forEach(item => {
+    if (item.sec) {
+      nav.innerHTML += `<div class="nav-section">${item.sec}</div>`;
+    } else {
+      nav.innerHTML += `<div class="nav-item${item.id==='dashboard'?' active':''}" data-page="${item.id}"
+        onclick="showPage('${item.id}',this)">
+        <span class="icon">${item.icon}</span><span>${item.label}</span></div>`;
+    }
+  });
+
+  // Role-based UI tweaks
+  if (ROLE === 'student') {
+    document.getElementById('searchBox').style.display = 'none';
+  }
+  if (ROLE === 'teacher') {
+    document.getElementById('addStudentBtn').style.display = 'none'; // teachers can't add students
+    document.getElementById('studentPageSub').textContent = 'View-only — contact Admin to make changes';
+  }
+  if (ROLE === 'admin') {
+    document.getElementById('studentPageSub').textContent = 'Full management access';
+  }
+})();
+
+// ── HELPERS ────────────────────────────────────────────────
+let allStudents = [];
+
+function logout(){ localStorage.removeItem('smsUser'); location.href='index.html'; }
+
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('pg-'+name);
+  if (pg) pg.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  else { const el=document.querySelector(`[data-page="${name}"]`); if(el) el.classList.add('active'); }
+
+  const titles = {
+    dashboard:'Dashboard', myprofile:'My Profile', mygrades:'My Grades',
+    myattendance:'My Attendance', myfees:'My Fees',
+    students:'Students', attendance:'Attendance', grades:'Grades', fees:'Fees', reports:'Reports'
+  };
+  const subs = {
+    dashboard:'Welcome to Student Management System',
+    myprofile:'Your personal academic information',
+    mygrades:'Your grades and academic performance',
+    myattendance:'Your class attendance records',
+    myfees:'Your fee payment records',
+    students:'Student records management',
+    attendance:'Attendance tracking',
+    grades:'Academic grade management',
+    fees:'Financial records',
+    reports:'System analytics and reports',
+  };
+  document.getElementById('pageTitle').textContent = titles[name]||name;
+  document.getElementById('pageSubtitle').textContent = subs[name]||'Student Management System';
+
+  const loaders = {
+    dashboard:loadDashboard, students:loadStudents,
+    attendance:loadAttendance, grades:loadGrades, fees:loadFees, reports:loadReports,
+    myprofile:loadMyProfile, mygrades:loadMyGrades,
+    myattendance:loadMyAttendance, myfees:loadMyFees
+  };
+  if (loaders[name]) loaders[name]();
+}
+
+function toast(msg, type='success') {
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=({success:'✅',error:'❌',info:'ℹ️'}[type]||'ℹ️')+' '+msg;
+  c.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',2800); setTimeout(()=>t.remove(),3100);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function gradeClass(g){return({'A+':'g-aplus','A':'g-a','B+':'g-bplus','B':'g-b','C':'g-c','D':'g-d','F':'g-f'}[g]||'');}
+function emptyRow(cols,icon,msg){return `<tr><td colspan="${cols}"><div class="empty-state"><div class="big">${icon}</div><p>${msg}</p></div></td></tr>`;}
+function deniedRow(cols,msg){return `<tr><td colspan="${cols}"><div class="access-denied"><div class="big">🔒</div><h3>Access Restricted</h3><p>${msg}</p></div></td></tr>`;}
+
+async function api(url){ const r=await fetch(url); return r.json(); }
+
+// ── DASHBOARD ──────────────────────────────────────────────
+async function loadDashboard(){
+  const pg=document.getElementById('pg-dashboard');
+
+  if(ROLE==='admin'){
+    pg.innerHTML=`
+      <div class="role-banner admin">
+        <div class="bicon">🛡️</div>
+        <div><h3>Admin Panel — Full Access</h3><p>Complete control over the Student Management System including fees, reports and all records</p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-val" id="s-tot">—</div><div class="stat-label">Total Students</div></div>
+        <div class="stat-card gold"><div class="stat-icon">✅</div><div class="stat-val" id="s-act">—</div><div class="stat-label">Active Students</div></div>
+        <div class="stat-card green"><div class="stat-icon">📋</div><div class="stat-val" id="s-att">—%</div><div class="stat-label">Attendance Rate</div></div>
+        <div class="stat-card purple"><div class="stat-icon">⭐</div><div class="stat-val" id="s-gpa">—</div><div class="stat-label">Average GPA</div></div>
+        <div class="stat-card red"><div class="stat-icon">💳</div><div class="stat-val" id="s-fee">—</div><div class="stat-label">Pending Fees</div></div>
+      </div>
+      <div class="info-grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Students</div></div>
+          <div id="recentStud"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick Actions</div></div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <button class="btn-primary" style="width:100%" onclick="showPage('students')">🎓 Manage Students</button>
+            <button class="btn-primary" style="width:100%;background:var(--green)" onclick="showPage('attendance')">📋 Mark Attendance</button>
+            <button class="btn-primary" style="width:100%;background:var(--purple)" onclick="showPage('grades')">📊 Add Grades</button>
+            <button class="btn-primary" style="width:100%;background:var(--orange)" onclick="showPage('fees')">💰 Manage Fees</button>
+            <button class="btn-primary" style="width:100%;background:var(--teal)" onclick="showPage('reports')">📈 View Reports</button>
+          </div>
+        </div>
+      </div>`;
+    try{
+      const d=await api('/api/stats');
+      document.getElementById('s-tot').textContent=d.totalStudents;
+      document.getElementById('s-act').textContent=d.activeStudents;
+      document.getElementById('s-att').textContent=d.attendanceRate+'%';
+      document.getElementById('s-gpa').textContent=d.avgGPA;
+      document.getElementById('s-fee').textContent='₹'+Number(d.pendingFees).toLocaleString('en-IN');
+    }catch(e){}
+    const sr=await api('/api/students'); allStudents=sr;
+    const el=document.getElementById('recentStud');
+    const recent=sr.slice(-5).reverse();
+    el.innerHTML=recent.length?`<table><thead><tr><th>Name</th><th>Course</th><th>Status</th></tr></thead><tbody>
+      ${recent.map(s=>`<tr><td><b>${s.Name||''}</b></td>
+        <td><small>${(s.Course||'').split(' ').slice(0,3).join(' ')}</small></td>
+        <td><span class="badge badge-${(s.Status||'').toLowerCase()}">${s.Status||''}</span></td></tr>`).join('')}
+      </tbody></table>`:'<div class="empty-state"><div class="big">🎓</div><p>No students yet. Add your first student!</p></div>';
+  }
+
+  else if(ROLE==='teacher'){
+    const [sr,ar,gr]=await Promise.all([api('/api/students'),api('/api/attendance'),api('/api/grades')]);
+    allStudents=sr;
+    const present=ar.filter(a=>a.Status==='Present').length;
+    const attRate=ar.length?((present/ar.length)*100).toFixed(1):0;
+    pg.innerHTML=`
+      <div class="role-banner teacher">
+        <div class="bicon">👨‍🏫</div>
+        <div><h3>Teacher Panel — Academic Access</h3><p>Manage students, attendance and grades. Fee records and system reports are Admin-only.</p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-val">${sr.length}</div><div class="stat-label">Total Students</div></div>
+        <div class="stat-card gold"><div class="stat-icon">✅</div><div class="stat-val">${sr.filter(s=>s.Status==='Active').length}</div><div class="stat-label">Active Students</div></div>
+        <div class="stat-card green"><div class="stat-icon">📋</div><div class="stat-val">${attRate}%</div><div class="stat-label">Attendance Rate</div></div>
+        <div class="stat-card purple"><div class="stat-icon">📊</div><div class="stat-val">${gr.length}</div><div class="stat-label">Grade Records</div></div>
+      </div>
+      <div class="info-grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Student Overview</div></div>
+          <table><thead><tr><th>Name</th><th>Course</th><th>Year</th><th>Status</th></tr></thead><tbody>
+          ${sr.slice(0,7).map(s=>`<tr>
+            <td><b>${s.Name||''}</b></td>
+            <td><small>${(s.Course||'').split(' ').slice(0,3).join(' ')}</small></td>
+            <td>Year ${s.Year||''}</td>
+            <td><span class="badge badge-${(s.Status||'').toLowerCase()}">${s.Status||''}</span></td>
+          </tr>`).join('')}
+          </tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick Actions</div></div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <button class="btn-primary" style="width:100%" onclick="showPage('students')">🎓 View Students</button>
+            <button class="btn-primary" style="width:100%;background:var(--green)" onclick="showPage('attendance')">📋 Mark Attendance</button>
+            <button class="btn-primary" style="width:100%;background:var(--purple)" onclick="showPage('grades')">📊 Add Grades</button>
+          </div>
+          <div class="divider"></div>
+          <div class="restrict-note">🔒 <b>Restricted Access:</b> Fee records and system reports are only available to Admin users.</div>
+        </div>
+      </div>`;
+  }
+
+  else { // STUDENT
+    const [sr,ar,gr,fr]=await Promise.all([api('/api/students'),api('/api/attendance'),api('/api/grades'),api('/api/fees')]);
+    allStudents=sr;
+    const me=sr.find(s=>s.Email===user.email)||sr[0]||{};
+    const myAtt=me.StudentID?ar.filter(a=>a.StudentID===me.StudentID):[];
+    const myGr=me.StudentID?gr.filter(g=>g.StudentID===me.StudentID):[];
+    const myFee=me.StudentID?fr.filter(f=>f.StudentID===me.StudentID):[];
+    const present=myAtt.filter(a=>a.Status==='Present').length;
+    const attRate=myAtt.length?((present/myAtt.length)*100).toFixed(1):0;
+    const pendingFee=myFee.filter(f=>f.Status==='Pending'||f.Status==='Overdue').reduce((a,f)=>a+(parseFloat(f.Amount)||0),0);
+    pg.innerHTML=`
+      <div class="role-banner student">
+        <div class="bicon">🎓</div>
+        <div><h3>Welcome, ${user.name}!</h3><p>View your personal academic records, grades, attendance and fee information</p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card green"><div class="stat-icon">📋</div><div class="stat-val">${attRate}%</div><div class="stat-label">My Attendance</div></div>
+        <div class="stat-card purple"><div class="stat-icon">⭐</div><div class="stat-val">${me.GPA||'—'}</div><div class="stat-label">My GPA</div></div>
+        <div class="stat-card gold"><div class="stat-icon">📊</div><div class="stat-val">${myGr.length}</div><div class="stat-label">Subjects Graded</div></div>
+        <div class="stat-card red"><div class="stat-icon">💳</div><div class="stat-val">₹${pendingFee.toLocaleString('en-IN')}</div><div class="stat-label">Pending Fees</div></div>
+      </div>
+      <div class="info-grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Grades</div></div>
+          ${myGr.length?`<table><thead><tr><th>Subject</th><th>Marks</th><th>Grade</th><th>Sem</th></tr></thead><tbody>
+          ${myGr.slice(-5).map(g=>`<tr><td>${g.Subject||''}</td><td>${g.Marks}/${g.MaxMarks}</td>
+            <td><span class="${gradeClass(g.Grade)}">${g.Grade||''}</span></td><td>${g.Semester||''}</td></tr>`).join('')}
+          </tbody></table>`:'<div class="empty-state"><div class="big">📊</div><p>No grades yet</p></div>'}
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Attendance</div></div>
+          ${myAtt.length?`<table><thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead><tbody>
+          ${myAtt.slice(-5).map(a=>`<tr><td>${a.Date||''}</td><td>${a.Subject||''}</td>
+            <td><span class="badge badge-${(a.Status||'').toLowerCase()}">${a.Status||''}</span></td></tr>`).join('')}
+          </tbody></table>`:'<div class="empty-state"><div class="big">📋</div><p>No attendance records yet</p></div>'}
+        </div>
+      </div>`;
+  }
+}
+
+// ── MY PROFILE (Student only) ──────────────────────────────
+async function loadMyProfile(){
+  const pg=document.getElementById('pg-myprofile');
+  const sr=await api('/api/students'); allStudents=sr;
+  const me=sr.find(s=>s.Email===user.email)||sr[0];
+  if(!me){
+    pg.innerHTML='<div class="access-denied"><div class="big">👤</div><h3>Profile Not Found</h3><p>Your student profile has not been set up yet. Please contact the Administrator.</p></div>';
+    return;
+  }
+  pg.innerHTML=`
+    <div class="profile-hero">
+      <div class="profile-avatar-lg">${(me.Name||'S')[0].toUpperCase()}</div>
+      <div>
+        <h2>${me.Name||''}</h2>
+        <p>${me.Course||''} &nbsp;·&nbsp; Year ${me.Year||'—'}</p>
+        <div class="profile-meta">
+          <span>🆔 ${me.StudentID}</span>
+          <span>⭐ GPA: ${me.GPA||'—'}</span>
+          <span>📅 Enrolled: ${me.EnrolledDate||'—'}</span>
+          <span class="badge badge-${(me.Status||'').toLowerCase()}">${me.Status||''}</span>
+        </div>
+      </div>
+    </div>
+    <div class="info-grid-2">
+      <div class="info-block">
+        <h4>📞 Contact Information</h4>
+        <div class="info-row"><span class="key">Email Address</span><span class="val">${me.Email||'—'}</span></div>
+        <div class="info-row"><span class="key">Phone Number</span><span class="val">${me.Phone||'—'}</span></div>
+        <div class="info-row"><span class="key">Home Address</span><span class="val">${me.Address||'—'}</span></div>
+        <div class="info-row"><span class="key">Guardian Name</span><span class="val">${me.Guardian||'—'}</span></div>
+      </div>
+      <div class="info-block">
+        <h4>🎓 Academic Details</h4>
+        <div class="info-row"><span class="key">Student ID</span><span class="val"><b>${me.StudentID}</b></span></div>
+        <div class="info-row"><span class="key">Course</span><span class="val">${me.Course||'—'}</span></div>
+        <div class="info-row"><span class="key">Current Year</span><span class="val">Year ${me.Year||'—'}</span></div>
+        <div class="info-row"><span class="key">CGPA</span><span class="val"><b>${me.GPA||'—'} / 10.0</b></span></div>
+        <div class="info-row"><span class="key">Enrolled Date</span><span class="val">${me.EnrolledDate||'—'}</span></div>
+        <div class="info-row"><span class="key">Account Status</span>
+          <span class="val"><span class="badge badge-${(me.Status||'').toLowerCase()}">${me.Status||''}</span></span></div>
+      </div>
+    </div>`;
+}
+
+// ── MY GRADES (Student) ────────────────────────────────────
+async function loadMyGrades(){
+  const [sr,gr]=await Promise.all([api('/api/students'),api('/api/grades')]);
+  allStudents=sr;
+  const me=sr.find(s=>s.Email===user.email)||sr[0];
+  const rows=me?gr.filter(g=>g.StudentID===me.StudentID):[];
+  const tb=document.getElementById('myGradeTable');
+  if(!rows.length){tb.innerHTML=emptyRow(5,'📊','No grade records found');return;}
+  tb.innerHTML=rows.map(g=>`<tr>
+    <td><b>${g.Subject||''}</b></td>
+    <td>${g.Marks}</td><td>${g.MaxMarks}</td>
+    <td><span class="${gradeClass(g.Grade)}">${g.Grade||''}</span></td>
+    <td>Semester ${g.Semester||''}</td>
+  </tr>`).join('');
+}
+
+// ── MY ATTENDANCE (Student) ────────────────────────────────
+async function loadMyAttendance(){
+  const [sr,ar]=await Promise.all([api('/api/students'),api('/api/attendance')]);
+  allStudents=sr;
+  const me=sr.find(s=>s.Email===user.email)||sr[0];
+  const rows=me?ar.filter(a=>a.StudentID===me.StudentID):[];
+  const tb=document.getElementById('myAttTable');
+  if(!rows.length){tb.innerHTML=emptyRow(3,'📋','No attendance records found');return;}
+  tb.innerHTML=rows.map(a=>`<tr>
+    <td>${a.Date||''}</td><td>${a.Subject||''}</td>
+    <td><span class="badge badge-${(a.Status||'').toLowerCase()}">${a.Status||''}</span></td>
+  </tr>`).join('');
+}
+
+// ── MY FEES (Student) ──────────────────────────────────────
+async function loadMyFees(){
+  const [sr,fr]=await Promise.all([api('/api/students'),api('/api/fees')]);
+  allStudents=sr;
+  const me=sr.find(s=>s.Email===user.email)||sr[0];
+  const rows=me?fr.filter(f=>f.StudentID===me.StudentID):[];
+  const tb=document.getElementById('myFeeTable');
+  if(!rows.length){tb.innerHTML=emptyRow(5,'💰','No fee records found');return;}
+  tb.innerHTML=rows.map(f=>`<tr>
+    <td>${f.Description||'—'}</td>
+    <td><b>₹${Number(f.Amount||0).toLocaleString('en-IN')}</b></td>
+    <td>${f.DueDate||'—'}</td><td>${f.PaidDate||'—'}</td>
+    <td><span class="badge badge-${(f.Status||'').toLowerCase()}">${f.Status||''}</span></td>
+  </tr>`).join('');
+}
+
+// ── STUDENTS (Admin: full CRUD / Teacher: view-only) ───────
+async function loadStudents(){
+  const sr=await api('/api/students'); allStudents=sr;
+  renderStudents(sr);
+}
+function renderStudents(students){
+  const tb=document.getElementById('studentTable');
+  if(!students.length){tb.innerHTML=emptyRow(8,'🎓','No students found');return;}
+  tb.innerHTML=students.map(s=>`<tr>
+    <td><b>${s.StudentID}</b></td>
+    <td>${s.Name||''}</td>
+    <td><small>${s.Course||''}</small></td>
+    <td>Year ${s.Year||''}</td>
+    <td><b>${s.GPA||0}</b></td>
+    <td><span class="badge badge-${(s.Status||'').toLowerCase()}">${s.Status||''}</span></td>
+    <td><small>${s.Email||''}</small></td>
+    <td style="white-space:nowrap">${ROLE==='admin'
+      ?`<button class="btn-sm btn-edit" onclick="editStudent('${s.StudentID}')">✏ Edit</button>
+         <button class="btn-sm btn-del" onclick="deleteStudent('${s.StudentID}')">🗑</button>`
+      :'<span style="color:#ccc;font-size:11px">View Only</span>'}</td>
+  </tr>`).join('');
+}
+
+function openAddStudent(){
+  if(ROLE!=='admin'){toast('Only Admin can add students','error');return;}
+  document.getElementById('studModalTitle').textContent='Add New Student';
+  document.getElementById('editStudentId').value='';
+  ['sName','sEmail','sPhone','sGpa','sGuardian','sAddress'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sStatus').value='Active';
+  openModal('studentModal');
+}
+function editStudent(id){
+  if(ROLE!=='admin'){toast('Only Admin can edit students','error');return;}
+  const s=allStudents.find(x=>x.StudentID===id); if(!s) return;
+  document.getElementById('studModalTitle').textContent='Edit Student';
+  document.getElementById('editStudentId').value=id;
+  document.getElementById('sName').value=s.Name||'';
+  document.getElementById('sEmail').value=s.Email||'';
+  document.getElementById('sPhone').value=s.Phone||'';
+  document.getElementById('sCourse').value=s.Course||'';
+  document.getElementById('sYear').value=s.Year||1;
+  document.getElementById('sGpa').value=s.GPA||'';
+  document.getElementById('sStatus').value=s.Status||'Active';
+  document.getElementById('sGuardian').value=s.Guardian||'';
+  document.getElementById('sAddress').value=s.Address||'';
+  openModal('studentModal');
+}
+async function saveStudent(){
+  const id=document.getElementById('editStudentId').value;
+  const data={name:document.getElementById('sName').value.trim(),
+    email:document.getElementById('sEmail').value.trim(),
+    phone:document.getElementById('sPhone').value,
+    course:document.getElementById('sCourse').value,
+    year:parseInt(document.getElementById('sYear').value),
+    gpa:parseFloat(document.getElementById('sGpa').value)||0,
+    status:document.getElementById('sStatus').value,
+    guardian:document.getElementById('sGuardian').value,
+    address:document.getElementById('sAddress').value};
+  if(!data.name||!data.email){toast('Name and Email required','error');return;}
+  const r=await fetch(id?`/api/students/${id}`:'/api/students',
+    {method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok){toast(id?'Student updated!':'Student added!');closeModal('studentModal');loadStudents();}
+  else toast(d.msg,'error');
+}
+async function deleteStudent(id){
+  if(ROLE!=='admin'){toast('Only Admin can delete','error');return;}
+  if(!confirm(`Delete student ${id}? This cannot be undone.`)) return;
+  const r=await fetch(`/api/students/${id}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){toast('Student deleted');loadStudents();}
+  else toast(d.msg,'error');
+}
+
+// ── ATTENDANCE ─────────────────────────────────────────────
+async function loadAttendance(){
+  const [ar,sr]=await Promise.all([api('/api/attendance'),api('/api/students')]);
+  allStudents=sr;
+  const nameMap={}; sr.forEach(s=>nameMap[s.StudentID]=s.Name);
+  const tb=document.getElementById('attTable');
+  if(!ar.length){tb.innerHTML=emptyRow(5,'📋','No attendance records yet');return;}
+  tb.innerHTML=ar.map(a=>`<tr>
+    <td>${a.RecordID}</td>
+    <td><b>${a.StudentID}</b> <span style="color:#bbb;font-size:12px">${nameMap[a.StudentID]||''}</span></td>
+    <td>${a.Date||''}</td><td>${a.Subject||''}</td>
+    <td><span class="badge badge-${(a.Status||'').toLowerCase()}">${a.Status||''}</span></td>
+  </tr>`).join('');
+}
+async function openAttModal(){
+  await populateStudentSelects();
+  document.getElementById('attDate').value=new Date().toISOString().split('T')[0];
+  openModal('attModal');
+}
+async function saveAttendance(){
+  const data={studentId:document.getElementById('attStudId').value,
+    date:document.getElementById('attDate').value,
+    subject:document.getElementById('attSubject').value,
+    status:document.getElementById('attStatus').value};
+  if(!data.studentId){toast('Select a student','error');return;}
+  const r=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok){toast('Attendance saved');closeModal('attModal');loadAttendance();}
+}
+
+// ── GRADES ─────────────────────────────────────────────────
+async function loadGrades(){
+  const [gr,sr]=await Promise.all([api('/api/grades'),api('/api/students')]);
+  allStudents=sr;
+  const nameMap={}; sr.forEach(s=>nameMap[s.StudentID]=s.Name);
+  const tb=document.getElementById('gradeTable');
+  if(!gr.length){tb.innerHTML=emptyRow(7,'📊','No grade records yet');return;}
+  tb.innerHTML=gr.map(g=>`<tr>
+    <td>${g.GradeID}</td>
+    <td><b>${g.StudentID}</b> <span style="color:#bbb;font-size:12px">${nameMap[g.StudentID]||''}</span></td>
+    <td>${g.Subject||''}</td>
+    <td>${g.Marks}</td><td>${g.MaxMarks}</td>
+    <td><span class="${gradeClass(g.Grade)}">${g.Grade||''}</span></td>
+    <td>Sem ${g.Semester}</td>
+  </tr>`).join('');
+}
+async function openGradeModal(){
+  await populateStudentSelects();
+  openModal('gradeModal');
+}
+async function saveGrade(){
+  const data={studentId:document.getElementById('gradeStudId').value,
+    subject:document.getElementById('gradeSubject').value,
+    marks:document.getElementById('gradeMarks').value,
+    maxMarks:document.getElementById('gradeMax').value,
+    semester:document.getElementById('gradeSem').value};
+  if(!data.studentId||!data.subject){toast('Fill all required fields','error');return;}
+  const r=await fetch('/api/grades',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok){toast('Grade added');closeModal('gradeModal');loadGrades();}
+}
+
+// ── FEES (Admin only) ──────────────────────────────────────
+async function loadFees(){
+  if(ROLE!=='admin'){
+    document.getElementById('feeTable').innerHTML=deniedRow(7,'Fee records are only accessible to Administrators.');
+    return;
+  }
+  const [fr,sr]=await Promise.all([api('/api/fees'),api('/api/students')]);
+  allStudents=sr;
+  const nameMap={}; sr.forEach(s=>nameMap[s.StudentID]=s.Name);
+  const tb=document.getElementById('feeTable');
+  if(!fr.length){tb.innerHTML=emptyRow(7,'💰','No fee records yet');return;}
+  tb.innerHTML=fr.map(f=>`<tr>
+    <td>${f.FeeID}</td>
+    <td><b>${f.StudentID}</b> <span style="color:#bbb;font-size:12px">${nameMap[f.StudentID]||''}</span></td>
+    <td><b>₹${Number(f.Amount||0).toLocaleString('en-IN')}</b></td>
+    <td>${f.Description||''}</td><td>${f.DueDate||'—'}</td><td>${f.PaidDate||'—'}</td>
+    <td><span class="badge badge-${(f.Status||'').toLowerCase()}">${f.Status||''}</span></td>
+  </tr>`).join('');
+}
+async function openFeeModal(){
+  if(ROLE!=='admin'){toast('Only Admin can manage fees','error');return;}
+  await populateStudentSelects();
+  document.getElementById('feeDue').value=new Date().toISOString().split('T')[0];
+  openModal('feeModal');
+}
+async function saveFee(){
+  const data={studentId:document.getElementById('feeStudId').value,
+    amount:document.getElementById('feeAmount').value,
+    dueDate:document.getElementById('feeDue').value,
+    paidDate:document.getElementById('feePaid').value,
+    status:document.getElementById('feeStatus').value,
+    description:document.getElementById('feeDesc').value};
+  if(!data.studentId||!data.amount){toast('Fill required fields','error');return;}
+  const r=await fetch('/api/fees',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok){toast('Fee record saved');closeModal('feeModal');loadFees();}
+}
+
+// ── REPORTS (Admin only) ───────────────────────────────────
+async function loadReports(){
+  if(ROLE!=='admin'){
+    document.getElementById('reportContent').innerHTML='<div class="access-denied"><div class="big">🔒</div><h3>Access Restricted</h3><p>System reports are only accessible to Administrators.</p></div>';
+    return;
+  }
+  const [sr,ar,gr,fr]=await Promise.all([api('/api/students'),api('/api/attendance'),api('/api/grades'),api('/api/fees')]);
+  const courses={};
+  sr.forEach(s=>{courses[s.Course]=(courses[s.Course]||0)+1;});
+  const totalFees=fr.reduce((a,f)=>a+(parseFloat(f.Amount)||0),0);
+  const paidFees=fr.filter(f=>f.Status==='Paid').reduce((a,f)=>a+(parseFloat(f.Amount)||0),0);
+  document.getElementById('reportContent').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:14px">📚 Course Distribution</h3>
+        ${Object.entries(courses).map(([c,n])=>`
+          <div style="margin-bottom:11px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+              <span>${c}</span><b>${n}</b>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${(n/sr.length*100).toFixed(0)}%;background:var(--blue-mid)"></div></div>
+          </div>`).join('')||'<p style="color:#ccc">No data</p>'}
+      </div>
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:14px">💰 Fee Collection</h3>
+        <div class="info-row"><span class="key">Total Recorded</span><span class="val">₹${totalFees.toLocaleString('en-IN')}</span></div>
+        <div class="info-row"><span class="key">Total Paid</span><span class="val" style="color:var(--green)">₹${paidFees.toLocaleString('en-IN')}</span></div>
+        <div class="info-row"><span class="key">Outstanding</span><span class="val" style="color:var(--red)">₹${(totalFees-paidFees).toLocaleString('en-IN')}</span></div>
+        <div class="progress" style="margin:10px 0 4px"><div class="progress-fill" style="width:${totalFees?(paidFees/totalFees*100).toFixed(0):0}%;background:var(--green)"></div></div>
+        <p style="font-size:12px;color:#aaa">Collection rate: ${totalFees?(paidFees/totalFees*100).toFixed(1):0}%</p>
+        <div class="divider"></div>
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:12px">📊 Grade Distribution</h3>
+        ${['A+','A','B+','B','C','D','F'].map(g=>{
+          const cnt=gr.filter(x=>x.Grade===g).length;
+          return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+            <span style="width:24px;font-weight:700;font-size:11.5px">${g}</span>
+            <div class="progress" style="flex:1"><div class="progress-fill" style="width:${gr.length?(cnt/gr.length*100).toFixed(0):0}%;background:var(--blue-mid)"></div></div>
+            <span style="font-size:12px;color:#aaa;width:18px;text-align:right">${cnt}</span>
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+}
+
+// ── POPULATE STUDENT DROPDOWNS ─────────────────────────────
+async function populateStudentSelects(){
+  if(!allStudents.length){const r=await api('/api/students');allStudents=r;}
+  const opts=allStudents.map(s=>`<option value="${s.StudentID}">${s.StudentID} — ${s.Name||''}</option>`).join('');
+  ['attStudId','gradeStudId','feeStudId'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=opts||'<option value="">No students yet</option>';
+  });
+}
+
+// ── GLOBAL SEARCH ──────────────────────────────────────────
+function globalSearch(q){
+  if(ROLE==='student') return;
+  if(!q.trim()){renderStudents(allStudents);return;}
+  const lq=q.toLowerCase();
+  const f=allStudents.filter(s=>
+    (s.Name||'').toLowerCase().includes(lq)||
+    (s.StudentID||'').toLowerCase().includes(lq)||
+    (s.Course||'').toLowerCase().includes(lq)||
+    (s.Email||'').toLowerCase().includes(lq));
+  showPage('students');
+  renderStudents(f);
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+// Start
+loadDashboard();
+</script>
+</body>
+</html>
